@@ -1,0 +1,17 @@
+#Curate the disease and pathway tables from IPA and do heat maps (Used Rstudio).
+heatmap.R
+#Create the Venn Diagrams for all 2way comparisons, and the 3way comparison, and generate common genes list
+double_venn_with_common_genes.rb
+triple_venn_with_common_genes.rb
+#Create a list with the union of the genes (with tabletools git rep). First filter the comparison csvs (eg. WT0h-KO0h.csv) by FC>=1.25 and pvalue<=0.1.
+./table-join/table-join.pl --full --table1 WT0h-KO0h_fc1.25pv0.1.csv --key1 id --key1 geneSymbol --key1 geneCoordinate --suffix1 .C1 --table2 WT6h-KO6h_fc1.25pv0.1.csv --suffix2 .C2 --sep "," | ./table-join/table-join.pl --full --table1 - --key1 id --key1 geneSymbol --key1 geneCoordinate --table2 WT24h-KO24h_fc1.25pv0.1.csv --suffix2 .C3 --sep "," > union3DEcomparisons_fc1.5pv0.1.csv
+#Create heatmaps for the intersection and the union of genes. Correlation hierarchical clustering among all samples.
+#For the union, there are NAs from the DE lists that were united. I found the union genes in the full genes list from PORT and plotted the full expression values.
+find_uniongenes_in_allgenes.rb
+heatmap.R
+#Manually create a list with the locis of the probes (from the company website, from gene map). Create a bed format (chrom, start, end, name, score, strand)
+#Convert genome coordinates from mm10 to mm9, with UCSC LiftOver.
+#Find the exons from the FINAL_master_list_of_exon_counts_MIN.lihong_renamed that correspond to the PCR probes.
+find_exons_from_probes.rb
+#Find the junctions from the FINAL_master_list_of_junction_counts_MIN.lihong.txt that correspond to the PCR probes.
+find_junctions_from_probes.rb
