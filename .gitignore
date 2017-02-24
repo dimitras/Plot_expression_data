@@ -1,0 +1,10 @@
+.DS_Store
+scripts/.Rapp.history
+.ruby-version
+DE
+HC
+IPA
+data
+olddata
+results
+scripts_not_in_use

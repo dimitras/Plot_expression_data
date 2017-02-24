@@ -1,5 +1,5 @@
 # USAGE:
-# ruby triple_venn_with_common_genes.rb data/WT0h-KO0h.csv data/WT6h-KO6h.csv data/WT24h-KO24h.csv results/WT-KOcomparison0.6.24.common_genes_fc1.5pv0.1.xlsx 1.25 0.1
+# ruby scripts/triple_venn_with_common_genes.rb data/prepare_files/WT0h-KO0h.csv data/prepare_files/WT6h-KO6h.csv data/prepare_files/WT24h-KO24h.csv results/Venns/3way-comparison/WT-KOcomparison0.6.24.common_genes_fc1.25pv0.1.xlsx 1.25 0.1
 
 # Create genes lists with the common genes between 3 DE comparisons.
 

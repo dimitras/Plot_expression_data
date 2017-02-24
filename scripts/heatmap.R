@@ -4,7 +4,7 @@ library(tidyr)
 library(tibble)
 library(scales)
 
-ipadata <- read.csv("~/Dropbox/lihong/IPA/WT-KOcomparison0.6.24.pathway.edited.for.heatmap.filtered.csv")
+ipadata <- read.csv("~/Dropbox/workspace/lihong/IPA/WT-KOcomparison0.6.24.pathway.edited.for.heatmap.filtered.csv")
 ipadata %>% 
   arrange(WT0hKO0h) %>% 
   # arrange(desc(WT0hKO0h)) %>% #order descending
@@ -16,8 +16,8 @@ ipadata %>%
   geom_tile() +
   scale_fill_gradient(low = "lightblue", high="darkblue") +
   theme(axis.title.x = element_blank(),axis.title.y = element_blank())
-ggsave("~/Dropbox/lihong/IPA/WT-KOcomparison0.6.24.pathway.edited.for.heatmap.filtered.tiff", height = 25, width = 15, units ="cm")
-ggsave("~/Dropbox/lihong/IPA/WT-KOcomparison0.6.24.pathway.edited.for.heatmap.filtered.eps", height = 25, width = 15, units ="cm")
+ggsave("~/Dropbox/lihong/workspace/IPA/WT-KOcomparison0.6.24.pathway.edited.for.heatmap.filtered.tiff", height = 25, width = 15, units ="cm")
+ggsave("~/Dropbox/lihong/workspace/IPA/WT-KOcomparison0.6.24.pathway.edited.for.heatmap.filtered.eps", height = 25, width = 15, units ="cm")
 
 
 
@@ -71,9 +71,11 @@ ggsave("~/Dropbox/lihong/results/WT-KOcomparison0.6.24.common_genes_abundance.ep
 
 
 
-
+# ***** SELECTED GRAPH ****** #
 # heatmap with zscore 
-genedata <- read.csv("~/Dropbox/lihong/results/WT-KOcomparison0.6.24.common_genes.csv")
+# genedata <- read.csv("~/Dropbox/lihong/results/WT-KOcomparison0.6.24.common_genes.csv")
+genedata <- read.csv("~/Dropbox/workspace/lihong/results/Venns/3way-comparison/sent/WT-KOcomparison0.6.24.common_genes_fc1.25pv0.1.xlsx.csv")
+
 gene_data.for_hclust = genedata %>% column_to_rownames("gene_symbol") %>% select(WT1_0h:KO4_24h) %>% as.matrix
 genedata.hclust_results = hclust(as.dist((1 - cor(t(gene_data.for_hclust)))))
 # genedata.hclust_results = hclust(dist(gene_data.for_hclust))
@@ -109,15 +111,63 @@ genedata %>%
         legend.text = element_text(size = 18),
         panel.grid = element_blank(),
         strip.background = element_blank())
-ggsave("~/Dropbox/lihong/results/WT-KOcomparison0.6.24.common_genes_zscore_corhclust_ncolor.tiff", height = 55, width = 25, units ="cm")
-ggsave("~/Dropbox/lihong/results/WT-KOcomparison0.6.24.common_genes_zscore_corhclust_ncolor.eps", height = 55, width = 25, units ="cm")
+ggsave("~/Dropbox/workspace/lihong/results/Heatmaps/sent/WT-KOcomparison0.6.24.common_genes_zscore_corhclust_ncolor_fc1.25pv0.1.tiff", height = 55, width = 25, units ="cm")
+ggsave("~/Dropbox/workspace/lihong/results/Heatmaps/sent/WT-KOcomparison0.6.24.common_genes_zscore_corhclust_ncolor_fc1.25pv0.1.eps", height = 55, width = 25, units ="cm")
+
+
+
+
+# MORE PATHWAYS
+
+files <- list.files(path="~/Dropbox/workspace/lihong/results/Heatmaps/PORT.expressions.for.IPA/", pattern="*.txt", full.names=T, recursive=FALSE)
+lapply(files, function(ifile) {
+  
+  genedata <- read.table(ifile, sep="\t", header = TRUE)
+  
+  gene_data.for_hclust = genedata %>% column_to_rownames("id") %>% select(WT1_0h:KO4_24h) %>% as.matrix
+  genedata.hclust_results = hclust(as.dist((1 - cor(t(gene_data.for_hclust)))))
+  # gene_data.for_hclust = genedata %>% select(id, starts_with("WT")) %>% column_to_rownames("id") %>% as.matrix
+  
+  genedata %>%
+    select(id, WT1_0h:KO4_24h) %>% 
+    gather(Sampleid,Count,WT1_0h:KO4_24h) %>%
+    mutate(TP=gsub(".*([[:digit:]]_[[:digit:]]+h)","\\1",Sampleid), 
+           TP=factor(TP,levels=c("1_0h", "2_0h","3_0h","4_0h" ,"1_6h", "2_6h","3_6h","4_6h","1_24h", "2_24h","3_24h","4_24h")),
+           gt=gsub("^(WT|KO).*","\\1",Sampleid),
+           gt=factor(gt,levels=c("WT","KO")),
+           id = factor(id, levels=genedata.hclust_results$labels[genedata.hclust_results$order])
+    ) %>%
+    
+    group_by(id) %>%
+    mutate(rmean = mean(Count, na.rm=TRUE),
+           rSD = sd(Count, na.rm=TRUE)) %>%
+    ungroup() %>%
+    mutate(zscore = (Count - rmean) / rSD) %>% 
+    # zscore = ifelse(zscore > 2, 2, ifelse(zscore < -2, -2, zscore))) %>%
+    
+    ggplot(aes(x = TP, y = id , fill=zscore)) +
+    geom_tile() +
+    scale_fill_gradientn(colours = c("red", "orange", "yellow", "green", "blue"), values = rescale(c(3,2,1,0,-1))) +
+    facet_grid(.~gt) +
+    theme(axis.title.x = element_blank(),axis.title.y = element_blank(),
+          axis.text.x = element_text(angle = 90, hjust = 1, vjust = 0.4, size = 18),
+          axis.text.y = element_text(size = 18),
+          strip.text = element_text(size = 20),
+          legend.title = element_text(size = 18),
+          legend.text = element_text(size = 15),
+          panel.grid = element_blank(),
+          strip.background = element_blank())
+  
+  ggsave(paste(ifile,"_zscore.corclust_ncolor.tiff"), height = 55, width = 25, units ="cm")
+  ggsave(paste(ifile,"_zscore.corclust_ncolor.eps"), height = 55, width = 25, units ="cm")
+
+})
 
 
 
 
 
-
-
+###########################################################################
 genedata <- read.csv("~/Dropbox/lihong/results/WT-KOcomparison0.6.24.common_genes_full.csv")
 
 # gene_data.for_hclust = genedata %>% select(id, starts_with("WT")) %>% column_to_rownames("id") %>% as.matrix
@@ -162,7 +212,7 @@ ggsave("~/Dropbox/lihong/results/WT-KOcomparison0.6.24.common_genes_logFC.eps", 
 
 
 # Heatmap for the union
-uniondata <- read.csv("~/Dropbox/lihong/results/uniongenes_fullexpression.csv") #union3DEcomparisons_fc1.5pv0.1_union.csv
+uniondata <- read.csv("~/Dropbox/workspace/lihong/results/Heatmaps/uniongenes_fullexpression.csv") #union3DEcomparisons_fc1.5pv0.1_union.csv
 # uniondata.for_hclust = uniondata %>% column_to_rownames("id") %>% select(WT1_0h.C1:KO4_0h.C1, KO1_6h.C2:WT4_6h.C2, WT1_24h.C3:KO4_24h.C3) %>%  as.matrix
 uniondata.for_hclust = uniondata %>% column_to_rownames("id") %>% select(WT1_0h:KO4_24h) %>%  as.matrix
 # uniondata.hclust_results = hclust(dist(uniondata.for_hclust))
@@ -191,9 +241,9 @@ uniondata %>%
   ggplot(aes(x = TP, y = id, fill=zscore)) +
   geom_tile() +
   scale_fill_gradientn(colours = c("darkred" ,"red", "orange", "yellow", "green", "blue", "purple"), values = rescale(c(4,3,2,1,0,-1,-2))) +
-  # scale_fill_manual(breaks=c("\[Inf,3)", "\[3,2)", "\[2,1)", "\[1,0)", "\[0,-1)", "\[-1,-Inf)"), values = c("red", "orange", "yellow", "white", "green", "blue")) + #ncolor
-  # scale_fill_gradient2(low = "blue", mid = "green", high = "red", midpoint = 0) + #3color
-  # scale_fill_gradient(low = "lightblue", high = "darkblue") + #2color
+  # # scale_fill_manual(breaks=c("\[Inf,3)", "\[3,2)", "\[2,1)", "\[1,0)", "\[0,-1)", "\[-1,-Inf)"), values = c("red", "orange", "yellow", "white", "green", "blue")) + #ncolor
+  # # scale_fill_gradient2(low = "blue", mid = "green", high = "red", midpoint = 0) + #3color
+  # # scale_fill_gradient(low = "lightblue", high = "darkblue") + #2color
   facet_grid(.~gt) +
   theme(axis.title.x = element_blank(),axis.title.y = element_blank(),
         axis.text.y = element_blank(),
@@ -205,11 +255,8 @@ uniondata %>%
         panel.grid = element_blank(),
         strip.background = element_blank())
 # ggsave("~/Dropbox/lihong/results/WT-KOcomparison0.6.24.union_zscore.tiff", height = 40, width = 15, units ="cm")
-ggsave("~/Dropbox/lihong/results/WT-KOcomparison0.6.24.union_fc1.25pv0.1_zscore_corhclust_ncolor.tiff", height = 45, width = 20, units ="cm")
-ggsave("~/Dropbox/lihong/results/WT-KOcomparison0.6.24.union_fc1.25pv0.1_zscore_corhclust_ncolor.eps", height = 45, width = 20, units ="cm")
-
-
-
+ggsave("~/Dropbox/lihong/results/Heatmaps/WT-KOcomparison0.6.24.union_fc1.25pv0.1_zscore_corhclust_ncolor.tiff", height = 45, width = 20, units ="cm")
+ggsave("~/Dropbox/lihong/results/Heatmaps/WT-KOcomparison0.6.24.union_fc1.25pv0.1_zscore_corhclust_ncolor.eps", height = 45, width = 20, units ="cm")
 
 
 
